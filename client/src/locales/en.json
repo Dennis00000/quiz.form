@@ -1,0 +1,272 @@
+{
+  "appName": "QuizForm",
+  "common": {
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout",
+    "darkMode": "Dark Mode",
+    "lightMode": "Light Mode",
+    "welcome": "Welcome to QuizForm",
+    "home": "Home",
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "backToHome": "Back to Home",
+    "close": "Close",
+    "searchUsers": "Search users by name or email",
+    "save": "Save Changes",
+    "saving": "Saving...",
+    "cancel": "Cancel"
+  },
+  "home": {
+    "hero": {
+      "title": "Create and Share Forms with Ease",
+      "subtitle": "Build beautiful forms and surveys in minutes. Share with your team or the world."
+    },
+    "popularTags": "Popular Tags",
+    "latestTemplates": "Latest Templates"
+  },
+  "templates": {
+    "by": "By",
+    "viewDetails": "View Details",
+    "createNew": "Create New Template",
+    "use": {
+      "emailCopy": "Send me a copy of my responses",
+      "emailPlaceholder": "Enter your email address",
+      "submit": "Submit Response",
+      "submitting": "Submitting...",
+      "submitted": "Response submitted successfully",
+      "thankYou": "Thank you for your response!",
+      "error": {
+        "submitFailed": "Failed to submit response",
+        "validation": {
+          "required": "This field is required",
+          "number": {
+            "invalid": "Please enter a valid number",
+            "min": "Value must be at least {{min}}",
+            "max": "Value must be at most {{max}}"
+          },
+          "text": {
+            "tooLong": "Response must be less than {{max}} characters"
+          },
+          "email": {
+            "invalid": "Please enter a valid email address"
+          },
+          "phone": {
+            "invalid": "Please enter a valid phone number"
+          },
+          "url": {
+            "invalid": "Please enter a valid URL"
+          },
+          "date": {
+            "invalid": "Please enter a valid date",
+            "min": "Date must be after {{min}}",
+            "max": "Date must be before {{max}}"
+          }
+        }
+      }
+    },
+    "preview": "Preview Template",
+    "maxQuestionsReached": "Maximum number of questions (16) reached",
+    "form": {
+      "title": "Template Title",
+      "description": "Description",
+      "topic": "Topic",
+      "tags": "Tags",
+      "tagPlaceholder": "Enter or select a tag",
+      "addTag": "Add Tag",
+      "questions": "Questions",
+      "questionTitle": "Question Title",
+      "questionType": "Question Type",
+      "addQuestion": "Add Question",
+      "create": "Create Template",
+      "validation": {
+        "titleRequired": "Title is required",
+        "titleLength": "Title must be between 3 and 100 characters",
+        "descriptionLength": "Description must be less than 500 characters",
+        "questionTitleRequired": "Question title is required",
+        "questionTitleLength": "Question title must be between 3 and 200 characters",
+        "minQuestions": "Template must have at least one question",
+        "maxQuestions": "Template cannot have more than 16 questions",
+        "duplicateTag": "This tag already exists"
+      },
+      "options": {
+        "label": "Options",
+        "addOption": "Add Option",
+        "optionPlaceholder": "Enter option text",
+        "minOptions": "At least 2 options required",
+        "maxOptions": "Maximum 10 options allowed",
+        "duplicateOption": "This option already exists"
+      },
+      "selectPlaceholder": "Select an option",
+      "privacy": {
+        "label": "Privacy Settings",
+        "public": "Make this template public",
+        "private": "Private - Only accessible to selected users",
+        "users": "Allowed Users",
+        "searchUsers": "Search users to grant access",
+        "removeUser": "Remove user"
+      },
+      "removeTag": "Remove tag"
+    },
+    "topics": {
+      "education": "Education",
+      "quiz": "Quiz",
+      "other": "Other"
+    },
+    "questionTypes": {
+      "string": "Single Line Text",
+      "text": "Multi Line Text",
+      "number": "Number",
+      "checkbox": "Checkbox",
+      "radio": "Multiple Choice",
+      "select": "Dropdown",
+      "date": "Date",
+      "email": "Email",
+      "phone": "Phone Number",
+      "url": "Website URL"
+    },
+    "notFound": "Template not found",
+    "error": {
+      "fetchFailed": "Failed to load template",
+      "notFound": "The template you're looking for doesn't exist"
+    },
+    "share": {
+      "button": "Share Template",
+      "title": "Share this template",
+      "link": "Share link",
+      "copy": "Copy",
+      "copied": "Copied!",
+      "twitter": "Share on Twitter",
+      "linkedin": "Share on LinkedIn"
+    },
+    "analytics": {
+      "overview": "Response Overview",
+      "totalResponses": "Total Responses",
+      "completionRate": "Completion Rate",
+      "stats": {
+        "average": "Average",
+        "min": "Minimum",
+        "max": "Maximum",
+        "count": "Response Count",
+        "averageLength": "Average Length"
+      }
+    },
+    "export": {
+      "csv": "Export CSV",
+      "pdf": "Export PDF",
+      "exporting": "Exporting...",
+      "error": "Failed to export responses"
+    },
+    "duplicate": {
+      "button": "Duplicate Template",
+      "success": "Template duplicated successfully",
+      "error": "Failed to duplicate template",
+      "title": "{{title}} (Copy)"
+    },
+    "comments": {
+      "title": "Comments",
+      "placeholder": "Write a comment...",
+      "submit": "Post Comment",
+      "deleted": "Comment deleted",
+      "error": {
+        "fetch": "Failed to load comments",
+        "add": "Failed to add comment",
+        "delete": "Failed to delete comment"
+      }
+    },
+    "likes": {
+      "like": "Like",
+      "unlike": "Unlike",
+      "count": "{{count}} likes",
+      "error": {
+        "add": "Failed to like template",
+        "remove": "Failed to unlike template"
+      }
+    }
+  },
+  "auth": {
+    "name": "Full Name",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "createAccount": "Create your account",
+    "loginPrompt": "Already have an account? Sign in",
+    "loginButton": "Sign In",
+    "registerButton": "Sign Up",
+    "registering": "Creating account...",
+    "registerError": "Failed to create account",
+    "forgotPassword": "Forgot Password?",
+    "signingIn": "Signing in...",
+    "signInError": "Failed to sign in",
+    "unauthorized": "Please sign in to access this page",
+    "validation": {
+      "nameRequired": "Name is required",
+      "emailRequired": "Email is required",
+      "emailInvalid": "Please enter a valid email address",
+      "passwordRequired": "Password is required",
+      "passwordLength": "Password must be at least 8 characters",
+      "passwordMismatch": "Passwords do not match"
+    },
+    "backToLogin": "Back to Login",
+    "resetPassword": {
+      "title": "Reset Password",
+      "description": "Enter your email address and we'll send you a link to reset your password.",
+      "submit": "Send Reset Link",
+      "sending": "Sending...",
+      "success": "Reset link sent successfully",
+      "error": "Failed to send reset link",
+      "checkEmail": "Please check your email for the reset link",
+      "newPassword": "Set New Password",
+      "resetting": "Resetting password...",
+      "successReset": "Password reset successfully",
+      "errorReset": "Failed to reset password"
+    }
+  },
+  "profile": {
+    "title": "Profile Settings",
+    "name": "Name",
+    "email": "Email",
+    "currentPassword": "Current Password",
+    "newPassword": "New Password",
+    "confirmPassword": "Confirm New Password",
+    "edit": "Edit Profile",
+    "success": {
+      "update": "Profile updated successfully"
+    },
+    "error": {
+      "update": "Failed to update profile",
+      "passwordMismatch": "New passwords do not match",
+      "passwordLength": "New password must be at least 8 characters",
+      "currentPassword": "Current password is incorrect"
+    }
+  },
+  "admin": {
+    "users": {
+      "title": "User Management",
+      "search": "Search users...",
+      "name": "Name",
+      "email": "Email",
+      "status": "Status",
+      "role": "Role",
+      "actions": "Actions",
+      "active": "Active",
+      "inactive": "Inactive",
+      "admin": "Admin",
+      "user": "User",
+      "block": "Block",
+      "unblock": "Unblock",
+      "makeAdmin": "Make Admin",
+      "removeAdmin": "Remove Admin"
+    },
+    "error": {
+      "fetchUsers": "Failed to fetch users",
+      "updateStatus": "Failed to update user status",
+      "updateRole": "Failed to update user role",
+      "selfDemote": "You cannot remove your own admin status"
+    },
+    "success": {
+      "updateStatus": "User status updated successfully",
+      "updateRole": "User role updated successfully"
+    }
+  }
+} 

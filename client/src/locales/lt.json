@@ -1,0 +1,58 @@
+{
+  "appName": "QuizForm",
+  "common": {
+    "login": "Prisijungti",
+    "register": "Registruotis",
+    "logout": "Atsijungti",
+    "darkMode": "Tamsus režimas",
+    "lightMode": "Šviesus režimas",
+    "welcome": "Sveiki atvykę į QuizForm",
+    "home": "Pradžia",
+    "loading": "Kraunama...",
+    "error": "Įvyko klaida",
+    "backToHome": "Grįžti į pradžią",
+    "close": "Uždaryti",
+    "searchUsers": "Ieškoti vartotojų pagal vardą ar el. paštą",
+    "save": "Išsaugoti pakeitimus",
+    "saving": "Saugoma...",
+    "cancel": "Atšaukti",
+    "delete": "Ištrinti"
+  },
+  "search": {
+    "placeholder": "Ieškoti šablonų...",
+    "results": "Rasta rezultatų: {{count}}",
+    "noResults": "Rezultatų nerasta",
+    "error": "Nepavyko atlikti paieškos"
+  },
+  "home": {
+    "hero": {
+      "title": "Kurkite ir dalinkitės formomis lengvai",
+      "subtitle": "Sukurkite gražias formas ir apklausas per kelias minutes. Dalinkitės su komanda arba visu pasauliu."
+    },
+    "popularTags": "Populiarios žymos",
+    "latestTemplates": "Naujausi šablonai",
+    "error": {
+      "fetchTags": "Nepavyko gauti žymų"
+    }
+  },
+  "auth": {
+    "email": "El. paštas",
+    "password": "Slaptažodis",
+    "confirmPassword": "Patvirtinti slaptažodį",
+    "loginButton": "Prisijungti",
+    "registerButton": "Registruotis",
+    "forgotPassword": "Pamiršote slaptažodį?"
+  },
+  "templates": {
+    "use": {
+      "emailCopy": "Atsiųsti man mano atsakymų kopiją",
+      "emailPlaceholder": "Įveskite el. pašto adresą",
+      "submit": "Pateikti atsakymą",
+      "submitting": "Siunčiama...",
+      "submitted": "Atsakymas sėkmingai pateiktas",
+      "error": {
+        "submitFailed": "Nepavyko pateikti atsakymo"
+      }
+    }
+  }
+} 
