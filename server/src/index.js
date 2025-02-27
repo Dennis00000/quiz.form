@@ -54,14 +54,17 @@ app.get('/direct-test', (req, res) => {
 });
 
 app.get('/direct-auth-test', (req, res) => {
+  console.log('All headers:', req.headers);
   const authHeader = req.header('Authorization');
   console.log('Auth header in direct route:', authHeader);
   
   try {
-    const token = authHeader?.replace('Bearer ', '');
-    if (!token) {
-      return res.status(401).json({ error: 'No token provided' });
+    if (!authHeader) {
+      return res.status(401).json({ error: 'No token provided', headers: req.headers });
     }
+    
+    const token = authHeader.replace('Bearer ', '');
+    console.log('Extracted token:', token.substring(0, 20) + '...');
     
     const jwt = require('jsonwebtoken');
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
@@ -72,7 +75,7 @@ app.get('/direct-auth-test', (req, res) => {
     });
   } catch (error) {
     console.error('Direct auth test error:', error);
-    res.status(401).json({ error: 'Invalid token' });
+    res.status(401).json({ error: 'Invalid token', errorDetails: error.message });
   }
 });
 
