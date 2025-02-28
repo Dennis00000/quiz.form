@@ -10,16 +10,16 @@ const languages = [
 const LanguageSelector = () => {
   const { i18n } = useTranslation();
 
-  const changeLanguage = (code) => {
-    i18n.changeLanguage(code);
-    localStorage.setItem('language', code);
+  const changeLanguage = (language) => {
+    i18n.changeLanguage(language);
+    localStorage.setItem('language', language);
   };
 
   return (
     <select
+      className="bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-md py-1 px-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
       value={i18n.language}
       onChange={(e) => changeLanguage(e.target.value)}
-      className="bg-transparent border-gray-300 rounded-md text-sm dark:border-gray-600 dark:text-gray-300"
     >
       {languages.map(({ code, name }) => (
         <option key={code} value={code}>

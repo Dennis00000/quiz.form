@@ -1,50 +1,59 @@
 const express = require('express');
 const router = express.Router();
-const { body } = require('express-validator');
-const auth = require('../middleware/auth');
-const checkRole = require('../middleware/checkRole');
 const templateController = require('../controllers/templateController');
+const auth = require('../middleware/auth');
+const { validate, schemas } = require('../middleware/validation');
 
-// Public routes
-router.get('/', templateController.getAllTemplates);
+/**
+ * @route   GET /api/templates
+ * @desc    Get all templates
+ * @access  Public
+ */
+router.get('/', templateController.getTemplates);
+
+/**
+ * @route   GET /api/templates/:id
+ * @desc    Get a template by ID
+ * @access  Public
+ */
 router.get('/:id', templateController.getTemplate);
 
-// Protected routes (require authentication)
-router.use(auth);
-
-// User routes
-router.post('/', [
-  body('title').trim().isLength({ min: 3, max: 100 }),
-  body('description').optional().trim().isLength({ max: 500 }),
-  body('topic').isIn(['Education', 'Quiz', 'Other']),
-  body('questions').isArray({ min: 1, max: 16 }),
-  body('questions.*.title').trim().isLength({ min: 3, max: 200 }),
-  body('questions.*.type').isIn(['string', 'text', 'number', 'checkbox', 'radio', 'select', 'date', 'email', 'phone', 'url']),
-], templateController.createTemplate);
-router.put('/:id', templateController.updateTemplate);
-router.delete('/:id', templateController.deleteTemplate);
-
-// Admin only routes
-router.post('/approve/:id', 
-  checkRole(['admin']), 
-  templateController.approveTemplate
+/**
+ * @route   POST /api/templates
+ * @desc    Create a new template
+ * @access  Private
+ */
+router.post(
+  '/',
+  auth,
+  validate(schemas.templateCreate),
+  templateController.createTemplate
 );
 
-// Submit response
-router.post('/:id/responses', templateController.submitResponse);
+/**
+ * @route   PUT /api/templates/:id
+ * @desc    Update a template
+ * @access  Private
+ */
+router.put(
+  '/:id',
+  auth,
+  validate(schemas.templateUpdate),
+  templateController.updateTemplate
+);
 
-// Get template responses
-router.get('/:id/responses', templateController.getResponses);
+/**
+ * @route   DELETE /api/templates/:id
+ * @desc    Delete a template
+ * @access  Private
+ */
+router.delete('/:id', auth, templateController.deleteTemplate);
 
-// Like/unlike template
-router.post('/:id/like', templateController.toggleLike);
+/**
+ * @route   POST /api/templates/:id/like
+ * @desc    Toggle like on a template
+ * @access  Private
+ */
+router.post('/:id/like', auth, templateController.toggleLike);
 
-// Add comment
-router.post('/:id/comments', [
-  body('content').trim().notEmpty()
-], templateController.addComment);
-
-// Delete comment
-router.delete('/:id/comments/:commentId', templateController.deleteComment);
-
-module.exports = router; 
+module.exports = router;

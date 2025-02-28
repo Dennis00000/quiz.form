@@ -1,52 +1,55 @@
-const jwt = require('jsonwebtoken');
-const serviceSupabase = require('../config/serviceSupabase');
+const { supabase } = require('../lib/supabase');
+const { AppError } = require('./errorHandler');
 
+/**
+ * Authentication middleware to protect routes
+ */
 const auth = async (req, res, next) => {
   try {
-    // Log the authorization header for debugging
-    console.log('Auth header:', req.header('Authorization'));
-    console.log('Headers:', JSON.stringify(req.headers));
+    // Get token from header
+    const authHeader = req.headers.authorization;
     
-    const token = req.header('Authorization')?.replace('Bearer ', '');
-    console.log('Extracted token:', token ? token.substring(0, 20) + '...' : 'none');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return next(new AppError('Authentication required', 401));
+    }
+    
+    const token = authHeader.split(' ')[1];
     
     if (!token) {
-      return res.status(401).json({ 
-        error: { message: 'Authentication required', status: 401 }
-      });
+      return next(new AppError('Authentication required', 401));
     }
-
-    try {
-      // For debugging, just pass through without verification
-      console.log('Bypassing token verification for debugging');
-      req.user = {
-        userId: '3d14ac63-1b79-433f-9e7a-bae427cf49f3',
-        role: 'user'
-      };
-      next();
-      
-      /* Normal verification code
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
-      console.log('Decoded token:', decoded);
-      
-      req.user = {
-        userId: decoded.userId,
-        role: decoded.role
-      };
-      
-      next();
-      */
-    } catch (error) {
-      console.error('Token verification error:', error.name, error.message);
-      return res.status(401).json({ 
-        error: { message: 'Invalid token', status: 401 }
-      });
+    
+    // Verify token
+    const { data, error } = await supabase.auth.getUser(token);
+    
+    if (error) {
+      return next(new AppError('Invalid or expired token', 401));
     }
+    
+    if (!data.user) {
+      return next(new AppError('User not found', 401));
+    }
+    
+    // Get user profile
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', data.user.id)
+      .single();
+      
+    if (profileError) {
+      return next(new AppError('User profile not found', 401));
+    }
+    
+    // Add user to request
+    req.user = {
+      ...data.user,
+      ...profile
+    };
+    
+    next();
   } catch (error) {
-    console.error('Auth middleware error:', error);
-    res.status(401).json({ 
-      error: { message: 'Authentication failed', status: 401 }
-    });
+    next(new AppError('Authentication failed', 401));
   }
 };
 

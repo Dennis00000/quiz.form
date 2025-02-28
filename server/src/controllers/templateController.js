@@ -1,404 +1,436 @@
-const serviceSupabase = require('../config/serviceSupabase');
+const { supabase } = require('../lib/supabase');
+const { AppError } = require('../middleware/errorHandler');
 
-const templateController = {
-  // Public routes
-  async getAllTemplates(req, res) {
+/**
+ * Template controller for handling template-related operations
+ */
+class TemplateController {
+  /**
+   * Get all templates with optional filtering
+   */
+  async getTemplates(req, res, next) {
     try {
-      const { data, error } = await serviceSupabase
+      const { 
+        topic, 
+        is_public, 
+        user_id, 
+        sort_by = 'created_at', 
+        sort_order = 'desc',
+        limit = 20,
+        page = 1
+      } = req.query;
+      
+      // Calculate offset for pagination
+      const offset = (page - 1) * limit;
+      
+      // Start building the query
+      let query = supabase
         .from('templates')
-        .select('*')
-        .eq('status', 'active');
-
-      if (error) throw error;
-
-      res.json(data);
-    } catch (error) {
-      console.error('Error getting templates:', error);
-      res.status(500).json({
-        error: { message: 'Failed to get templates', status: 500 }
-      });
-    }
-  },
-
-  async getTemplate(req, res) {
-    try {
-      const { id } = req.params;
-      const { data, error } = await serviceSupabase
-        .from('templates')
-        .select('*, user:users(name)')
-        .eq('id', id)
-        .single();
-
-      if (error) throw error;
-      if (!data) {
-        return res.status(404).json({
-          error: { message: 'Template not found', status: 404 }
-        });
+        .select('*, profiles:user_id(name, avatar_url), tags:template_tags(tags(*))')
+        .order(sort_by, { ascending: sort_order === 'asc' })
+        .range(offset, offset + limit - 1);
+      
+      // Apply filters if provided
+      if (topic) {
+        query = query.eq('topic', topic);
       }
-
-      res.json(data);
-    } catch (error) {
-      console.error('Error getting template:', error);
-      res.status(500).json({
-        error: { message: 'Failed to get template', status: 500 }
-      });
-    }
-  },
-
-  // Protected routes
-  async createTemplate(req, res) {
-    try {
-      const { title, description, topic, questions } = req.body;
-      const userId = req.user.userId;
-
-      const { data, error } = await serviceSupabase
-        .from('templates')
-        .insert([
-          {
-            title,
-            description,
-            topic,
-            questions,
-            user_id: userId,
-            status: 'pending'
-          }
-        ])
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      res.status(201).json(data);
-    } catch (error) {
-      console.error('Error creating template:', error);
-      res.status(500).json({
-        error: { message: 'Failed to create template', status: 500 }
-      });
-    }
-  },
-
-  async updateTemplate(req, res) {
-    try {
-      const { id } = req.params;
-      const { title, description, topic, questions } = req.body;
-      const userId = req.user.userId;
-
-      // Check ownership
-      const { data: template, error: checkError } = await serviceSupabase
-        .from('templates')
-        .select('user_id')
-        .eq('id', id)
-        .single();
-
-      if (checkError || !template) {
-        return res.status(404).json({
-          error: { message: 'Template not found', status: 404 }
-        });
+      
+      if (is_public !== undefined) {
+        query = query.eq('is_public', is_public === 'true');
       }
-
-      if (template.user_id !== userId) {
-        return res.status(403).json({
-          error: { message: 'Not authorized to update this template', status: 403 }
-        });
+      
+      if (user_id) {
+        query = query.eq('user_id', user_id);
       }
-
-      const { data, error } = await serviceSupabase
+      
+      // Execute the query
+      const { data, error, count } = await query;
+      
+      if (error) {
+        return next(new AppError(error.message, 500));
+      }
+      
+      // Get total count for pagination
+      const { count: totalCount, error: countError } = await supabase
         .from('templates')
-        .update({ title, description, topic, questions })
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      res.json(data);
-    } catch (error) {
-      console.error('Error updating template:', error);
-      res.status(500).json({
-        error: { message: 'Failed to update template', status: 500 }
+        .select('*', { count: 'exact', head: true });
+        
+      if (countError) {
+        return next(new AppError(countError.message, 500));
+      }
+      
+      res.status(200).json({
+        status: 'success',
+        results: data.length,
+        total: totalCount,
+        page: parseInt(page),
+        totalPages: Math.ceil(totalCount / limit),
+        data
       });
-    }
-  },
-
-  async deleteTemplate(req, res) {
-    try {
-      const { id } = req.params;
-      const userId = req.user.userId;
-
-      // Check ownership
-      const { data: template, error: checkError } = await serviceSupabase
-        .from('templates')
-        .select('user_id')
-        .eq('id', id)
-        .single();
-
-      if (checkError || !template) {
-        return res.status(404).json({
-          error: { message: 'Template not found', status: 404 }
-        });
-      }
-
-      if (template.user_id !== userId) {
-        return res.status(403).json({
-          error: { message: 'Not authorized to delete this template', status: 403 }
-        });
-      }
-
-      const { error } = await serviceSupabase
-        .from('templates')
-        .delete()
-        .eq('id', id);
-
-      if (error) throw error;
-
-      res.status(204).send();
     } catch (error) {
-      console.error('Error deleting template:', error);
-      res.status(500).json({
-        error: { message: 'Failed to delete template', status: 500 }
-      });
+      next(new AppError(error.message, 500));
     }
-  },
-
-  // Admin routes
-  async approveTemplate(req, res) {
+  }
+  
+  /**
+   * Get a single template by ID
+   */
+  async getTemplate(req, res, next) {
     try {
       const { id } = req.params;
       
-      const { data, error } = await serviceSupabase
+      const { data, error } = await supabase
         .from('templates')
-        .update({ status: 'active' })
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      res.json(data);
-    } catch (error) {
-      console.error('Error approving template:', error);
-      res.status(500).json({
-        error: { message: 'Failed to approve template', status: 500 }
-      });
-    }
-  },
-
-  // Response functions
-  async submitResponse(req, res) {
-    try {
-      const { id } = req.params;
-      const userId = req.user.userId;
-      const { answers } = req.body;
-
-      // Check if template exists and is active
-      const { data: template, error: templateError } = await serviceSupabase
-        .from('templates')
-        .select('status')
+        .select(`
+          *,
+          profiles:user_id(name, avatar_url),
+          questions(*),
+          tags:template_tags(tags(*))
+        `)
         .eq('id', id)
         .single();
-
-      if (templateError || !template) {
-        return res.status(404).json({
-          error: { message: 'Template not found', status: 404 }
-        });
+        
+      if (error) {
+        if (error.code === 'PGRST116') {
+          return next(new AppError('Template not found', 404));
+        }
+        return next(new AppError(error.message, 500));
       }
-
-      if (template.status !== 'active') {
-        return res.status(400).json({
-          error: { message: 'Template is not active', status: 400 }
-        });
-      }
-
-      const { data, error } = await serviceSupabase
-        .from('responses')
-        .insert([{
-          template_id: id,
-          user_id: userId,
-          answers
-        }])
-        .select('*, user:users(name)')
-        .single();
-
-      if (error) throw error;
-
-      res.status(201).json(data);
-    } catch (error) {
-      console.error('Error submitting response:', error);
-      res.status(500).json({
-        error: { message: 'Failed to submit response', status: 500 }
-      });
-    }
-  },
-
-  async getResponses(req, res) {
-    try {
-      const { id } = req.params;
-      const userId = req.user.userId;
-
-      // Check if user owns the template or is admin
-      const { data: template, error: templateError } = await serviceSupabase
-        .from('templates')
-        .select('user_id')
-        .eq('id', id)
-        .single();
-
-      if (templateError || !template) {
-        return res.status(404).json({
-          error: { message: 'Template not found', status: 404 }
-        });
-      }
-
-      if (template.user_id !== userId && req.user.role !== 'admin') {
-        return res.status(403).json({
-          error: { message: 'Not authorized to view responses', status: 403 }
-        });
-      }
-
-      const { data, error } = await serviceSupabase
-        .from('responses')
-        .select('*, user:users(name)')
-        .eq('template_id', id)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      res.json(data);
-    } catch (error) {
-      console.error('Error getting responses:', error);
-      res.status(500).json({
-        error: { message: 'Failed to get responses', status: 500 }
-      });
-    }
-  },
-
-  // Like functions
-  async toggleLike(req, res) {
-    try {
-      const { id } = req.params;
-      const userId = req.user.userId;
-
-      // Check if like exists
-      const { data: existingLike, error: checkError } = await serviceSupabase
-        .from('likes')
-        .select()
-        .eq('template_id', id)
-        .eq('user_id', userId)
-        .single();
-
-      if (checkError && !checkError.message.includes('No rows found')) {
-        throw checkError;
-      }
-
-      if (existingLike) {
-        // Unlike
-        const { error: deleteError } = await serviceSupabase
-          .from('likes')
-          .delete()
-          .eq('template_id', id)
-          .eq('user_id', userId);
-
-        if (deleteError) throw deleteError;
-      } else {
-        // Like
-        const { error: insertError } = await serviceSupabase
-          .from('likes')
-          .insert([{
-            template_id: id,
-            user_id: userId
-          }]);
-
-        if (insertError) throw insertError;
-      }
-
-      // Get updated like count
-      const { count, error: countError } = await serviceSupabase
-        .from('likes')
-        .select('*', { count: 'exact' })
-        .eq('template_id', id);
-
-      if (countError) throw countError;
-
-      res.json({
-        liked: !existingLike,
-        likes: count
+      
+      res.status(200).json({
+        status: 'success',
+        data
       });
     } catch (error) {
-      console.error('Error toggling like:', error);
-      res.status(500).json({
-        error: { message: 'Failed to toggle like', status: 500 }
-      });
-    }
-  },
-
-  // Comment functions
-  async addComment(req, res) {
-    try {
-      const { id } = req.params;
-      const userId = req.user.userId;
-      const { content } = req.body;
-
-      const { data, error } = await serviceSupabase
-        .from('comments')
-        .insert([{
-          template_id: id,
-          user_id: userId,
-          content
-        }])
-        .select('*, user:users(name)')
-        .single();
-
-      if (error) throw error;
-
-      res.status(201).json(data);
-    } catch (error) {
-      console.error('Error adding comment:', error);
-      res.status(500).json({
-        error: { message: 'Failed to add comment', status: 500 }
-      });
-    }
-  },
-
-  async deleteComment(req, res) {
-    try {
-      const { id, commentId } = req.params;
-      const userId = req.user.userId;
-
-      // Check if user owns the comment or is admin
-      const { data: comment, error: checkError } = await serviceSupabase
-        .from('comments')
-        .select('user_id')
-        .eq('id', commentId)
-        .eq('template_id', id)
-        .single();
-
-      if (checkError || !comment) {
-        return res.status(404).json({
-          error: { message: 'Comment not found', status: 404 }
-        });
-      }
-
-      if (comment.user_id !== userId && req.user.role !== 'admin') {
-        return res.status(403).json({
-          error: { message: 'Not authorized to delete this comment', status: 403 }
-        });
-      }
-
-      const { error } = await serviceSupabase
-        .from('comments')
-        .delete()
-        .eq('id', commentId)
-        .eq('template_id', id);
-
-      if (error) throw error;
-
-      res.status(204).send();
-    } catch (error) {
-      console.error('Error deleting comment:', error);
-      res.status(500).json({
-        error: { message: 'Failed to delete comment', status: 500 }
-      });
+      next(new AppError(error.message, 500));
     }
   }
-};
+  
+  /**
+   * Create a new template
+   */
+  async createTemplate(req, res, next) {
+    try {
+      const { title, description, is_public, topic, questions, tags } = req.body;
+      const user_id = req.user.id;
+      
+      // Validate required fields
+      if (!title) {
+        return next(new AppError('Title is required', 400));
+      }
+      
+      // Create the template
+      const { data: template, error: templateError } = await supabase
+        .from('templates')
+        .insert({
+          title,
+          description,
+          is_public,
+          topic,
+          user_id
+        })
+        .select()
+        .single();
+        
+      if (templateError) {
+        return next(new AppError(templateError.message, 500));
+      }
+      
+      // Add questions if provided
+      if (questions && questions.length > 0) {
+        const questionsWithTemplateId = questions.map(question => ({
+          ...question,
+          template_id: template.id
+        }));
+        
+        const { error: questionsError } = await supabase
+          .from('questions')
+          .insert(questionsWithTemplateId);
+          
+        if (questionsError) {
+          return next(new AppError(questionsError.message, 500));
+        }
+      }
+      
+      // Add tags if provided
+      if (tags && tags.length > 0) {
+        const tagLinks = tags.map(tag_id => ({
+          template_id: template.id,
+          tag_id
+        }));
+        
+        const { error: tagsError } = await supabase
+          .from('template_tags')
+          .insert(tagLinks);
+          
+        if (tagsError) {
+          return next(new AppError(tagsError.message, 500));
+        }
+      }
+      
+      res.status(201).json({
+        status: 'success',
+        data: template
+      });
+    } catch (error) {
+      next(new AppError(error.message, 500));
+    }
+  }
+  
+  /**
+   * Update an existing template
+   */
+  async updateTemplate(req, res, next) {
+    try {
+      const { id } = req.params;
+      const { title, description, is_public, topic, questions, tags } = req.body;
+      const user_id = req.user.id;
+      
+      // Check if template exists and belongs to user
+      const { data: existingTemplate, error: checkError } = await supabase
+        .from('templates')
+        .select('*')
+        .eq('id', id)
+        .single();
+        
+      if (checkError) {
+        if (checkError.code === 'PGRST116') {
+          return next(new AppError('Template not found', 404));
+        }
+        return next(new AppError(checkError.message, 500));
+      }
+      
+      // Check ownership
+      if (existingTemplate.user_id !== user_id) {
+        return next(new AppError('You do not have permission to update this template', 403));
+      }
+      
+      // Update the template
+      const { data: template, error: templateError } = await supabase
+        .from('templates')
+        .update({
+          title,
+          description,
+          is_public,
+          topic,
+          updated_at: new Date()
+        })
+        .eq('id', id)
+        .select()
+        .single();
+        
+      if (templateError) {
+        return next(new AppError(templateError.message, 500));
+      }
+      
+      // Update questions if provided
+      if (questions && questions.length > 0) {
+        // First delete existing questions
+        const { error: deleteError } = await supabase
+          .from('questions')
+          .delete()
+          .eq('template_id', id);
+          
+        if (deleteError) {
+          return next(new AppError(deleteError.message, 500));
+        }
+        
+        // Then insert new questions
+        const questionsWithTemplateId = questions.map(question => ({
+          ...question,
+          template_id: id
+        }));
+        
+        const { error: questionsError } = await supabase
+          .from('questions')
+          .insert(questionsWithTemplateId);
+          
+        if (questionsError) {
+          return next(new AppError(questionsError.message, 500));
+        }
+      }
+      
+      // Update tags if provided
+      if (tags) {
+        // First delete existing tag links
+        const { error: deleteTagsError } = await supabase
+          .from('template_tags')
+          .delete()
+          .eq('template_id', id);
+          
+        if (deleteTagsError) {
+          return next(new AppError(deleteTagsError.message, 500));
+        }
+        
+        // Then insert new tag links
+        if (tags.length > 0) {
+          const tagLinks = tags.map(tag_id => ({
+            template_id: id,
+            tag_id
+          }));
+          
+          const { error: tagsError } = await supabase
+            .from('template_tags')
+            .insert(tagLinks);
+            
+          if (tagsError) {
+            return next(new AppError(tagsError.message, 500));
+          }
+        }
+      }
+      
+      res.status(200).json({
+        status: 'success',
+        data: template
+      });
+    } catch (error) {
+      next(new AppError(error.message, 500));
+    }
+  }
+  
+  /**
+   * Delete a template
+   */
+  async deleteTemplate(req, res, next) {
+    try {
+      const { id } = req.params;
+      const user_id = req.user.id;
+      
+      // Check if template exists and belongs to user
+      const { data: existingTemplate, error: checkError } = await supabase
+        .from('templates')
+        .select('*')
+        .eq('id', id)
+        .single();
+        
+      if (checkError) {
+        if (checkError.code === 'PGRST116') {
+          return next(new AppError('Template not found', 404));
+        }
+        return next(new AppError(checkError.message, 500));
+      }
+      
+      // Check ownership
+      if (existingTemplate.user_id !== user_id) {
+        return next(new AppError('You do not have permission to delete this template', 403));
+      }
+      
+      // Delete the template (cascade will handle related records)
+      const { error: deleteError } = await supabase
+        .from('templates')
+        .delete()
+        .eq('id', id);
+        
+      if (deleteError) {
+        return next(new AppError(deleteError.message, 500));
+      }
+      
+      res.status(204).json({
+        status: 'success',
+        data: null
+      });
+    } catch (error) {
+      next(new AppError(error.message, 500));
+    }
+  }
+  
+  /**
+   * Toggle like on a template
+   */
+  async toggleLike(req, res, next) {
+    try {
+      const { id } = req.params;
+      const user_id = req.user.id;
+      
+      // Check if template exists
+      const { data: template, error: templateError } = await supabase
+        .from('templates')
+        .select('*')
+        .eq('id', id)
+        .single();
+        
+      if (templateError) {
+        if (templateError.code === 'PGRST116') {
+          return next(new AppError('Template not found', 404));
+        }
+        return next(new AppError(templateError.message, 500));
+      }
+      
+      // Check if user has already liked the template
+      const { data: existingLike, error: likeError } = await supabase
+        .from('template_likes')
+        .select('*')
+        .eq('template_id', id)
+        .eq('user_id', user_id)
+        .single();
+        
+      if (likeError && likeError.code !== 'PGRST116') {
+        return next(new AppError(likeError.message, 500));
+      }
+      
+      let action;
+      
+      // If like exists, remove it
+      if (existingLike) {
+        const { error: unlikeError } = await supabase
+          .from('template_likes')
+          .delete()
+          .eq('template_id', id)
+          .eq('user_id', user_id);
+          
+        if (unlikeError) {
+          return next(new AppError(unlikeError.message, 500));
+        }
+        
+        action = 'unliked';
+      } 
+      // Otherwise, add a like
+      else {
+        const { error: addLikeError } = await supabase
+          .from('template_likes')
+          .insert({
+            template_id: id,
+            user_id
+          });
+          
+        if (addLikeError) {
+          return next(new AppError(addLikeError.message, 500));
+        }
+        
+        action = 'liked';
+      }
+      
+      // Get updated like count
+      const { data: likeCount, error: countError } = await supabase
+        .from('template_likes')
+        .select('*', { count: 'exact', head: true })
+        .eq('template_id', id);
+        
+      if (countError) {
+        return next(new AppError(countError.message, 500));
+      }
+      
+      // Update template likes_count
+      const { error: updateError } = await supabase
+        .from('templates')
+        .update({ likes_count: likeCount })
+        .eq('id', id);
+        
+      if (updateError) {
+        return next(new AppError(updateError.message, 500));
+      }
+      
+      res.status(200).json({
+        status: 'success',
+        data: {
+          action,
+          likes: likeCount
+        }
+      });
+    } catch (error) {
+      next(new AppError(error.message, 500));
+    }
+  }
+}
 
-module.exports = templateController; 
+module.exports = new TemplateController(); 

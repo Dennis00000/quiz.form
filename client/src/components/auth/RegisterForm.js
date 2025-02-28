@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { useDispatch } from 'react-redux';
-import { register } from '../../store/authSlice';
+import { useAuth } from '../../contexts/AuthContext';
 import Input from '../common/Input';
 import Button from '../common/Button';
 import Alert from '../common/Alert';
@@ -10,127 +9,142 @@ import Alert from '../common/Alert';
 const RegisterForm = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const dispatch = useDispatch();
-
+  const { register, loading } = useAuth();
+  
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
     confirmPassword: ''
   });
-  const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(false);
-
+  
+  const [error, setError] = useState('');
+  
   const handleChange = (e) => {
-    setFormData(prev => ({
-      ...prev,
-      [e.target.name]: e.target.value
-    }));
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
   };
-
-  const validateForm = () => {
-    if (formData.password !== formData.confirmPassword) {
-      setError(t('auth.passwordsDoNotMatch'));
-      return false;
-    }
-    return true;
-  };
-
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validateForm()) return;
+    setError('');
     
-    setError(null);
-    setLoading(true);
-
+    // Validation
+    if (!formData.name || !formData.email || !formData.password || !formData.confirmPassword) {
+      setError(t('auth.validation.allFields'));
+      return;
+    }
+    
+    if (formData.password !== formData.confirmPassword) {
+      setError(t('auth.validation.passwordMatch'));
+      return;
+    }
+    
+    if (formData.password.length < 6) {
+      setError(t('auth.validation.passwordLength'));
+      return;
+    }
+    
     try {
-      await dispatch(register(formData)).unwrap();
-      navigate('/');
-    } catch (err) {
-      setError(err.message || t('auth.registerError'));
-    } finally {
-      setLoading(false);
+      await register(formData.email, formData.password, formData.name);
+      navigate('/login');
+    } catch (error) {
+      // Error is already handled in the auth context with toast
+      console.error('Registration error:', error);
     }
   };
-
+  
   return (
-    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white">
-            {t('auth.createAccount')}
-          </h2>
-        </div>
+    <div className="flex min-h-full flex-1 flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+        <h2 className="mt-6 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900 dark:text-white">
+          {t('auth.register.title')}
+        </h2>
+      </div>
 
-        {error && (
-          <Alert variant="error" onClose={() => setError(null)}>
-            {error}
-          </Alert>
-        )}
-
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm space-y-4">
+      <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-[480px]">
+        <div className="bg-white dark:bg-gray-800 px-6 py-12 shadow sm:rounded-lg sm:px-12">
+          {error && (
+            <Alert 
+              type="error"
+              message={error}
+              className="mb-6"
+            />
+          )}
+          
+          <form className="space-y-6" onSubmit={handleSubmit}>
             <Input
-              label={t('auth.name')}
-              type="text"
+              label={t('common.name')}
+              id="name"
               name="name"
-              required
+              type="text"
               value={formData.name}
               onChange={handleChange}
-            />
-
-            <Input
-              label={t('auth.email')}
-              type="email"
-              name="email"
               required
+            />
+            
+            <Input
+              label={t('common.email')}
+              id="email"
+              name="email"
+              type="email"
               value={formData.email}
               onChange={handleChange}
-              placeholder="name@example.com"
-            />
-
-            <Input
-              label={t('auth.password')}
-              type="password"
-              name="password"
               required
+            />
+            
+            <Input
+              label={t('common.password')}
+              id="password"
+              name="password"
+              type="password"
               value={formData.password}
               onChange={handleChange}
-            />
-
-            <Input
-              label={t('auth.confirmPassword')}
-              type="password"
-              name="confirmPassword"
               required
+            />
+            
+            <Input
+              label={t('auth.register.confirmPassword')}
+              id="confirmPassword"
+              name="confirmPassword"
+              type="password"
               value={formData.confirmPassword}
               onChange={handleChange}
+              required
             />
-          </div>
-
-          <div>
-            <Button
-              type="submit"
-              variant="primary"
-              className="w-full"
-              loading={loading}
-            >
-              {t('auth.signUp')}
-            </Button>
-          </div>
-
-          <div className="text-center">
-            <span className="text-sm text-gray-600 dark:text-gray-400">
-              {t('auth.haveAccount')}{' '}
-              <Link
-                to="/login"
-                className="font-medium text-primary-600 hover:text-primary-500"
+            
+            <div>
+              <Button
+                type="submit"
+                className="w-full"
+                loading={loading}
+                disabled={loading}
               >
-                {t('auth.signIn')}
-              </Link>
-            </span>
+                {t('auth.register.action')}
+              </Button>
+            </div>
+          </form>
+          
+          <div className="mt-6">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300 dark:border-gray-600" />
+              </div>
+              <div className="relative flex justify-center text-sm font-medium leading-6">
+                <span className="bg-white dark:bg-gray-800 px-6 text-gray-900 dark:text-gray-300">
+                  {t('auth.register.or')}
+                </span>
+              </div>
+            </div>
           </div>
-        </form>
+        </div>
+        
+        <p className="mt-10 text-center text-sm text-gray-500">
+          {t('auth.register.haveAccount')}{' '}
+          <Link to="/login" className="font-semibold leading-6 text-primary-600 hover:text-primary-500">
+            {t('auth.login.action')}
+          </Link>
+        </p>
       </div>
     </div>
   );

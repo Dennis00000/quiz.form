@@ -1,17 +1,36 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import { Provider } from 'react-redux';
+import { BrowserRouter } from 'react-router-dom';
+import { store } from './store';
 import './index.css';
 import App from './App';
-import reportWebVitals from './reportWebVitals';
+import './i18n';
+import { ThemeProvider } from './contexts/ThemeContext';
+import { AuthProvider } from './contexts/AuthContext';
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
-root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+// Add console logs for debugging
+console.log('Index.js is running');
+console.log('React version:', React.version);
 
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
-reportWebVitals();
+try {
+  const root = ReactDOM.createRoot(document.getElementById('root'));
+  console.log('Root element found:', !!root);
+  
+  root.render(
+    <React.StrictMode>
+      <Provider store={store}>
+        <BrowserRouter>
+          <ThemeProvider>
+            <AuthProvider>
+              <App />
+            </AuthProvider>
+          </ThemeProvider>
+        </BrowserRouter>
+      </Provider>
+    </React.StrictMode>
+  );
+  console.log('Render called');
+} catch (error) {
+  console.error('Error rendering React app:', error);
+}

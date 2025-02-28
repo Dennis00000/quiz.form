@@ -1,21 +1,90 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
+import { useFormik } from 'formik';
+import * as Yup from 'yup';
+import { toast } from 'react-hot-toast';
+import { questionService } from '../../services/questionService';
 
-const QuestionForm = ({ questions, onChange }) => {
+const QuestionForm = ({ templateId, onSubmit, initialValues = {} }) => {
   const { t } = useTranslation();
-  const [localQuestions, setLocalQuestions] = useState(questions);
+  const [loading, setLoading] = useState(false);
 
-  const handleDragEnd = (result) => {
-    if (!result.destination) return;
+  const validationSchema = Yup.object({
+    title: Yup.string().required(t('validation.required')),
+    content: Yup.string().required(t('validation.required')),
+  });
 
-    const items = Array.from(localQuestions);
-    const [reorderedItem] = items.splice(result.source.index, 1);
-    items.splice(result.destination.index, 0, reorderedItem);
+  const formik = useFormik({
+    initialValues: {
+      title: initialValues.title || '',
+      content: initialValues.content || '',
+      ...initialValues
+    },
+    validationSchema,
+    onSubmit: async (values) => {
+      try {
+        setLoading(true);
+        const data = await questionService.submitQuestion({
+          ...values,
+          templateId
+        });
+        toast.success(t('questions.submitSuccess'));
+        if (onSubmit) onSubmit(data);
+        formik.resetForm();
+      } catch (error) {
+        console.error('Error submitting question:', error);
+        toast.error(t('questions.submitError'));
+      } finally {
+        setLoading(false);
+      }
+    }
+  });
 
-    setLocalQuestions(items);
-    onChange(items);
-  };
+  return (
+    <form onSubmit={formik.handleSubmit} className="space-y-4">
+      <div>
+        <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          {t('questions.title')}
+        </label>
+        <input
+          id="title"
+          name="title"
+          type="text"
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+          {...formik.getFieldProps('title')}
+        />
+        {formik.touched.title && formik.errors.title && (
+          <p className="mt-1 text-sm text-red-600">{formik.errors.title}</p>
+        )}
+      </div>
 
-  // ... rest of the component
-}; 
+      <div>
+        <label htmlFor="content" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          {t('questions.content')}
+        </label>
+        <textarea
+          id="content"
+          name="content"
+          rows={4}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+          {...formik.getFieldProps('content')}
+        />
+        {formik.touched.content && formik.errors.content && (
+          <p className="mt-1 text-sm text-red-600">{formik.errors.content}</p>
+        )}
+      </div>
+
+      <div className="flex justify-end">
+        <button
+          type="submit"
+          disabled={loading}
+          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50"
+        >
+          {loading ? t('common.submitting') : t('questions.submit')}
+        </button>
+      </div>
+    </form>
+  );
+};
+
+export default QuestionForm; 

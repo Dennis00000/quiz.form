@@ -67,4 +67,29 @@ i18n
     }
   });
 
-export default i18n; 
+export default i18n;
+
+// Export configuration options for i18n
+export const i18nConfig = {
+  supportedLanguages: ['en', 'ru', 'lt'],
+  defaultLanguage: 'en',
+  namespaces: ['translation', 'errors', 'common'],
+  defaultNamespace: 'translation',
+  
+  // Helper function to change language
+  changeLanguage: (language) => {
+    if (i18n.languages.includes(language)) {
+      i18n.changeLanguage(language);
+      localStorage.setItem('language', language);
+      return true;
+    }
+    return false;
+  },
+  
+  // Get current language
+  getCurrentLanguage: () => {
+    return i18n.language || localStorage.getItem('language') || 'en';
+  }
+};
+
+export default i18nConfig; 

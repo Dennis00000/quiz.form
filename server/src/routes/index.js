@@ -1,35 +1,24 @@
 const express = require('express');
 const router = express.Router();
 
-router.get('/route-test', (req, res) => {
-  res.json({ message: 'Route test works!' });
-});
-
-router.get('/auth-test', auth, (req, res) => {
-  res.json({ 
-    message: 'Auth test in routes works!',
-    user: req.user
-  });
-});
-
-const authRoutes = require('./auth');
+// Import route modules
 const templateRoutes = require('./templates');
 const userRoutes = require('./users');
-const searchRoutes = require('./search');
-const adminRoutes = require('./admin');
-const homeRoutes = require('./home');
-const exportRoutes = require('./export');
+const authRoutes = require('./auth');
 const testRoutes = require('./test');
-const simpleRoutes = require('./simple');
+const templatesMinimalRoutes = require('./templates-minimal');
 
-router.use('/auth', authRoutes);
+// Test route
+router.get('/test', (req, res) => {
+  res.json({ message: 'API is working!' });
+});
+
+// Register routes
 router.use('/templates', templateRoutes);
 router.use('/users', userRoutes);
-router.use('/search', searchRoutes);
-router.use('/admin', adminRoutes);
-router.use('/home', homeRoutes);
-router.use('/export', exportRoutes);
+router.use('/auth', authRoutes);
 router.use('/test', testRoutes);
-router.use('/simple', simpleRoutes);
+router.use('/templates-minimal', templatesMinimalRoutes);
+// Register other routes as needed
 
-module.exports = router; 
+module.exports = router;

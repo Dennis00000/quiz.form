@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { api } from '../../services/api';
+import api from '../../services/api';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 
 export const TagInput = ({ value = [], onChange }) => {

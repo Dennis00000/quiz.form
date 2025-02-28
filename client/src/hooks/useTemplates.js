@@ -1,7 +1,11 @@
 import { useState, useCallback } from 'react';
-import templateService from '../services/templateService';
+import { templateService } from '../services/templateService';
+import { handleError } from '../utils/errorHandler';
+import { useTranslation } from 'react-i18next';
+import { toast } from 'react-hot-toast';
 
 export const useTemplates = () => {
+  const { t } = useTranslation();
   const [templates, setTemplates] = useState([]);
   const [template, setTemplate] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -21,20 +25,52 @@ export const useTemplates = () => {
     }
   }, []);
 
-  const createTemplate = useCallback(async (templateData) => {
-    setLoading(true);
-    setError(null);
+  const createTemplate = async (templateData) => {
     try {
-      const response = await templateService.createTemplate(templateData);
-      setTemplates(prev => [...prev, response.data]);
-      return response.data;
+      setLoading(true);
+      const result = await templateService.createTemplate(templateData);
+      toast.success(t('templates.createSuccess'));
+      return result;
     } catch (error) {
-      setError(error.response?.data?.message || 'Failed to create template');
+      handleError(error, {
+        defaultMessage: t('templates.createError')
+      });
       throw error;
     } finally {
       setLoading(false);
     }
-  }, []);
+  };
+
+  const updateTemplate = async (id, templateData) => {
+    try {
+      setLoading(true);
+      const result = await templateService.updateTemplate(id, templateData);
+      toast.success(t('templates.updateSuccess'));
+      return result;
+    } catch (error) {
+      handleError(error, {
+        defaultMessage: t('templates.updateError')
+      });
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteTemplate = async (id) => {
+    try {
+      setLoading(true);
+      await templateService.deleteTemplate(id);
+      toast.success(t('templates.deleteSuccess'));
+    } catch (error) {
+      handleError(error, {
+        defaultMessage: t('templates.deleteError')
+      });
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchTemplate = async (id) => {
     try {
@@ -60,5 +96,7 @@ export const useTemplates = () => {
     fetchTemplates,
     fetchTemplate,
     createTemplate,
+    updateTemplate,
+    deleteTemplate
   };
 }; 

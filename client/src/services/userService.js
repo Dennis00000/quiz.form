@@ -1,21 +1,45 @@
-import axios from 'axios';
-
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+import api from './api';
 
 class UserService {
-  async updateProfile(userData) {
-    const response = await axios.put(`${API_URL}/users/profile`, userData);
-    if (response.data.user) {
-      localStorage.setItem('user', JSON.stringify(response.data.user));
+  async getProfile() {
+    try {
+      const response = await api.get('/users/me');
+      return response.data;
+    } catch (error) {
+      throw error;
     }
-    return response.data.user;
+  }
+
+  async updateProfile(userData) {
+    try {
+      const response = await api.put('/users/profile', userData);
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async changePassword(oldPassword, newPassword) {
+    try {
+      const response = await api.post('/users/change-password', {
+        oldPassword,
+        newPassword
+      });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   }
 
   async searchUsers(query) {
-    const response = await axios.get(`${API_URL}/users/search`, {
-      params: { q: query }
-    });
-    return response.data;
+    try {
+      const response = await api.get('/users/search', {
+        params: { q: query }
+      });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
   }
 }
 

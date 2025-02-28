@@ -1,28 +1,53 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
-import enTranslations from './locales/en.json';
-import ltTranslations from './locales/lt.json';
-import ruTranslations from './locales/ru.json';
+import LanguageDetector from 'i18next-browser-languagedetector';
 
+// Import translations
+import enTranslation from './locales/en.json';
+import esTranslation from './locales/es.json';
+import frTranslation from './locales/fr.json';
+
+// Configure i18next
 i18n
+  // Detect user language
+  .use(LanguageDetector)
+  // Pass the i18n instance to react-i18next
   .use(initReactI18next)
+  // Initialize i18next
   .init({
     resources: {
       en: {
-        translation: enTranslations,
+        translation: enTranslation
       },
-      lt: {
-        translation: ltTranslations,
+      es: {
+        translation: esTranslation
       },
-      ru: {
-        translation: ruTranslations,
-      },
+      fr: {
+        translation: frTranslation
+      }
     },
-    lng: localStorage.getItem('language') || 'en',
     fallbackLng: 'en',
+    debug: process.env.NODE_ENV === 'development',
+    
+    // Common namespace used around the app
+    ns: ['translation'],
+    defaultNS: 'translation',
+    
     interpolation: {
-      escapeValue: false,
+      escapeValue: false, // React already escapes values
     },
+    
+    // Detection options
+    detection: {
+      order: ['localStorage', 'navigator'],
+      lookupLocalStorage: 'language',
+      caches: ['localStorage'],
+    },
+    
+    // React options
+    react: {
+      useSuspense: true,
+    }
   });
 
 export default i18n; 

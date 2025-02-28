@@ -2,18 +2,17 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import {
-  GripVertical,
-  Trash,
-  Eye,
-  EyeOff,
-  Plus,
-  X
+  PlusIcon,
+  XMarkIcon,
+  Bars3Icon
 } from '@heroicons/react/24/outline';
-import supabase from '../../config/supabase';
+import { EyeIcon, EyeSlashIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { supabase } from '../../config/supabase';
 
 const QuestionList = ({ questions, templateId, onQuestionsChange, isEditable = false }) => {
   const { t } = useTranslation();
 
+  // eslint-disable-next-line no-unused-vars
   const handleDelete = async (questionId) => {
     try {
       const { error } = await supabase
@@ -66,13 +65,15 @@ const QuestionList = ({ questions, templateId, onQuestionsChange, isEditable = f
     handleReorder(result.source.index, result.destination.index);
   };
 
-  const toggleVisibility = (index) => {
-    const newQuestions = [...questions];
-    newQuestions[index] = {
-      ...newQuestions[index],
-      showInTable: !newQuestions[index].showInTable
-    };
-    onQuestionsChange(newQuestions);
+  const handleToggleVisibility = (index) => {
+    const updatedQuestions = [...questions];
+    updatedQuestions[index].showInTable = !updatedQuestions[index].showInTable;
+    onQuestionsChange(updatedQuestions);
+  };
+
+  const handleRemoveQuestion = (index) => {
+    const updatedQuestions = questions.filter((_, i) => i !== index);
+    onQuestionsChange(updatedQuestions);
   };
 
   const addQuestion = () => {
@@ -128,7 +129,7 @@ const QuestionList = ({ questions, templateId, onQuestionsChange, isEditable = f
           onClick={addQuestion}
           className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
         >
-          <Plus className="-ml-0.5 mr-2 h-4 w-4" />
+          <PlusIcon className="-ml-0.5 mr-2 h-4 w-4" />
           {t('templates.addQuestion')}
         </button>
       </div>
@@ -158,7 +159,7 @@ const QuestionList = ({ questions, templateId, onQuestionsChange, isEditable = f
                         <div
                           className="flex items-center"
                         >
-                          <GripVertical className="h-5 w-5 text-gray-400" />
+                          <Bars3Icon className="h-5 w-5 text-gray-400" />
                         </div>
 
                         <div className="flex-1 space-y-4">
@@ -218,7 +219,7 @@ const QuestionList = ({ questions, templateId, onQuestionsChange, isEditable = f
                                       onClick={() => removeOption(index, optionIndex)}
                                       className="ml-0.5 inline-flex h-4 w-4 rounded-full"
                                     >
-                                      <X className="h-4 w-4" />
+                                      <XMarkIcon className="h-4 w-4" />
                                     </button>
                                   </span>
                                 ))}
@@ -230,22 +231,22 @@ const QuestionList = ({ questions, templateId, onQuestionsChange, isEditable = f
                         <div className="flex space-x-2">
                           <button
                             type="button"
-                            onClick={() => toggleVisibility(index)}
+                            onClick={() => handleToggleVisibility(index)}
                             className="text-gray-400 hover:text-gray-500"
                           >
                             {question.showInTable ? (
-                              <Eye className="h-5 w-5" />
+                              <EyeIcon className="h-5 w-5" />
                             ) : (
-                              <EyeOff className="h-5 w-5" />
+                              <EyeSlashIcon className="h-5 w-5" />
                             )}
                           </button>
                           {isEditable && (
                             <button
                               type="button"
-                              onClick={() => handleDelete(question.id)}
+                              onClick={() => handleRemoveQuestion(index)}
                               className="text-red-400 hover:text-red-500"
                             >
-                              <Trash className="h-5 w-5" />
+                              <TrashIcon className="h-5 w-5" />
                             </button>
                           )}
                         </div>

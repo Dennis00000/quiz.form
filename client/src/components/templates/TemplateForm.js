@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useTemplates } from '../../hooks/useTemplates';
 import PreviewModal from './PreviewModal';
 import { Combobox } from '@headlessui/react';
@@ -23,6 +23,8 @@ import { supabase } from '../../lib/supabase';
 import { api } from '../../services/api';
 import { TagInput as CommonTagInput } from '../common/TagInput';
 import { UserSelect } from '../common/UserSelect';
+import { templateService } from '../../services/templateService';
+import QuestionBuilder from './QuestionBuilder';
 
 const TOPIC_OPTIONS = [
   { value: 'Education', label: 'Education' },
@@ -32,7 +34,7 @@ const TOPIC_OPTIONS = [
 
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB
 
-const TemplateForm = ({ initialData }) => {
+const TemplateForm = ({ initialData = null }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -44,10 +46,10 @@ const TemplateForm = ({ initialData }) => {
   const [formData, setFormData] = useState({
     title: initialData?.title || '',
     description: initialData?.description || '',
-    topic: initialData?.topic || TOPIC_OPTIONS[0].value,
+    topic: initialData?.topic || 'Education',
     image: null,
     imageUrl: initialData?.imageUrl || '',
-    isPublic: initialData?.isPublic ?? true,
+    is_public: initialData?.is_public ?? true,
     allowedUsers: initialData?.allowedUsers || [],
     questions: initialData?.questions || [],
     tags: initialData?.tags || [],
@@ -80,6 +82,7 @@ const TemplateForm = ({ initialData }) => {
 
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const fetchTags = async () => {
@@ -170,29 +173,24 @@ const TemplateForm = ({ initialData }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.title || !formData.description) {
-      toast.error(t('templates.requiredFields'));
-      return;
-    }
-
+    
     try {
-      setLoading(true);
-      const method = initialData ? 'put' : 'post';
-      const url = initialData 
-        ? `/templates/${initialData.id}`
-        : '/templates';
-
-      const response = await api[method](url, formData);
-      toast.success(
-        initialData 
-          ? t('templates.updateSuccess')
-          : t('templates.createSuccess')
-      );
-      navigate(`/templates/${response.data.id}`);
+      setIsSubmitting(true);
+      
+      if (initialData) {
+        await templateService.updateTemplate(initialData.id, formData);
+        toast.success(t('templates.updateSuccess'));
+      } else {
+        await templateService.createTemplate(formData);
+        toast.success(t('templates.createSuccess'));
+      }
+      
+      navigate('/templates');
     } catch (error) {
+      console.error('Template form error:', error);
       toast.error(error.response?.data?.message || t('common.error'));
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -248,10 +246,10 @@ const TemplateForm = ({ initialData }) => {
   };
 
   const removeTag = (tagToRemove) => {
-    setFormData({
-      ...formData,
-      tags: formData.tags.filter(tag => tag !== tagToRemove),
-    });
+    setFormData(prev => ({
+      ...prev,
+      tags: prev.tags.filter(tag => tag !== tagToRemove),
+    }));
   };
 
   const onDragEnd = (result) => {
@@ -331,7 +329,7 @@ const TemplateForm = ({ initialData }) => {
   return (
     <div className="max-w-4xl mx-auto py-8 px-4">
       <h1 className="text-2xl font-bold mb-6">
-        {t('templates.createNew')}
+        {initialData ? t('templates.edit') : t('templates.create')}
       </h1>
 
       {error && (
@@ -370,8 +368,8 @@ const TemplateForm = ({ initialData }) => {
           <label className="flex items-center space-x-2">
             <input
               type="checkbox"
-              name="isPublic"
-              checked={formData.isPublic}
+              name="is_public"
+              checked={formData.is_public}
               onChange={handleChange}
               className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
             />
@@ -415,12 +413,12 @@ const TemplateForm = ({ initialData }) => {
           onChange={handleTagsChange}
         />
 
-        <QuestionList
+        <QuestionBuilder
           questions={formData.questions}
           onChange={handleQuestionsChange}
         />
 
-        {!formData.isPublic && (
+        {!formData.is_public && (
           <UserSelect
             value={formData.allowedUsers}
             onChange={users => setFormData(prev => ({ ...prev, allowedUsers: users }))}
@@ -428,19 +426,18 @@ const TemplateForm = ({ initialData }) => {
         )}
 
         <div className="flex justify-end space-x-4">
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={() => navigate(-1)}
+          <Link
+            to="/templates"
+            className="inline-flex justify-center py-2 px-4 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
           >
             {t('common.cancel')}
-          </Button>
+          </Link>
           <Button
             type="submit"
             variant="primary"
-            loading={loading}
+            loading={isSubmitting}
           >
-            {loading ? t('common.saving') : t('common.save')}
+            {isSubmitting ? t('common.saving') : (initialData ? t('common.update') : t('common.create'))}
           </Button>
         </div>
       </form>

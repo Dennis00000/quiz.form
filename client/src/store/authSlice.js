@@ -1,119 +1,289 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { api } from '../services/api';
+import { supabase } from '../lib/supabase';
+import { handleSupabaseError } from '../utils/errorHandler';
+
+// Initial state
+const initialState = {
+  user: null,
+  isAuthenticated: false,
+  isLoading: false,
+  error: null,
+  session: null,
+};
 
 // Async thunks
-export const login = createAsyncThunk(
+export const loginUser = createAsyncThunk(
   'auth/login',
-  async (credentials, { rejectWithValue }) => {
+  async ({ email, password }, { rejectWithValue }) => {
     try {
-      const response = await api.post('/auth/login', credentials);
-      localStorage.setItem('token', response.data.token);
-      return response.data;
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      
+      if (error) throw error;
+      
+      return data;
     } catch (error) {
-      return rejectWithValue(error.response?.data || { message: 'Login failed' });
+      return rejectWithValue(handleSupabaseError(error, 'Login failed', true));
     }
   }
 );
 
-export const register = createAsyncThunk(
+export const registerUser = createAsyncThunk(
   'auth/register',
-  async (userData, { rejectWithValue }) => {
+  async ({ email, password, name }, { rejectWithValue }) => {
     try {
-      const response = await api.post('/auth/register', userData);
-      localStorage.setItem('token', response.data.token);
-      return response.data;
+      // Register the user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+      
+      if (authError) throw authError;
+      
+      // Create a profile for the user
+      if (authData.user) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .insert([
+            { 
+              id: authData.user.id, 
+              name, 
+              email,
+              created_at: new Date().toISOString(),
+            }
+          ]);
+        
+        if (profileError) throw profileError;
+      }
+      
+      return authData;
     } catch (error) {
-      return rejectWithValue(error.response?.data || { message: 'Registration failed' });
+      return rejectWithValue(handleSupabaseError(error, 'Registration failed', true));
     }
   }
 );
 
-export const logout = createAsyncThunk(
+export const logoutUser = createAsyncThunk(
   'auth/logout',
-  async () => {
-    localStorage.removeItem('token');
-    return null;
-  }
-);
-
-export const getCurrentUser = createAsyncThunk(
-  'auth/getCurrentUser',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await api.get('/auth/me');
-      return response.data;
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) throw error;
+      
+      return null;
     } catch (error) {
-      return rejectWithValue(error.response?.data || { message: 'Failed to get user' });
+      return rejectWithValue(handleSupabaseError(error, 'Logout failed', true));
     }
   }
 );
 
-// Slice
+export const fetchUserProfile = createAsyncThunk(
+  'auth/fetchProfile',
+  async (userId, { rejectWithValue }) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+      
+      if (error) throw error;
+      
+      return data;
+    } catch (error) {
+      return rejectWithValue(handleSupabaseError(error, 'Failed to fetch profile', true));
+    }
+  }
+);
+
+export const updateUserProfile = createAsyncThunk(
+  'auth/updateProfile',
+  async ({ userId, profileData }, { rejectWithValue }) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .update(profileData)
+        .eq('id', userId)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      return data;
+    } catch (error) {
+      return rejectWithValue(handleSupabaseError(error, 'Failed to update profile', true));
+    }
+  }
+);
+
+export const resetPassword = createAsyncThunk(
+  'auth/resetPassword',
+  async (email, { rejectWithValue }) => {
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      
+      if (error) throw error;
+      
+      return { email };
+    } catch (error) {
+      return rejectWithValue(handleSupabaseError(error, 'Failed to send reset email', true));
+    }
+  }
+);
+
+export const updatePassword = createAsyncThunk(
+  'auth/updatePassword',
+  async (password, { rejectWithValue }) => {
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password,
+      });
+      
+      if (error) throw error;
+      
+      return null;
+    } catch (error) {
+      return rejectWithValue(handleSupabaseError(error, 'Failed to update password', true));
+    }
+  }
+);
+
+// Auth slice
 const authSlice = createSlice({
   name: 'auth',
-  initialState: {
-    user: null,
-    isAuthenticated: false,
-    loading: false,
-    error: null
-  },
+  initialState,
   reducers: {
+    setUser: (state, action) => {
+      state.user = action.payload;
+      state.isAuthenticated = !!action.payload;
+    },
+    setSession: (state, action) => {
+      state.session = action.payload;
+    },
     clearError: (state) => {
       state.error = null;
-    }
+    },
   },
   extraReducers: (builder) => {
+    // Login
     builder
-      // Login
-      .addCase(login.pending, (state) => {
-        state.loading = true;
+      .addCase(loginUser.pending, (state) => {
+        state.isLoading = true;
         state.error = null;
       })
-      .addCase(login.fulfilled, (state, action) => {
-        state.loading = false;
+      .addCase(loginUser.fulfilled, (state, action) => {
+        state.isLoading = false;
         state.isAuthenticated = true;
         state.user = action.payload.user;
+        state.session = action.payload.session;
       })
-      .addCase(login.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload?.message || 'Login failed';
-      })
-      // Register
-      .addCase(register.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(register.fulfilled, (state, action) => {
-        state.loading = false;
-        state.isAuthenticated = true;
-        state.user = action.payload.user;
-      })
-      .addCase(register.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload?.message || 'Registration failed';
-      })
-      // Logout
-      .addCase(logout.fulfilled, (state) => {
-        state.user = null;
-        state.isAuthenticated = false;
-      })
-      // Get Current User
-      .addCase(getCurrentUser.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(getCurrentUser.fulfilled, (state, action) => {
-        state.loading = false;
-        state.isAuthenticated = true;
-        state.user = action.payload;
-      })
-      .addCase(getCurrentUser.rejected, (state) => {
-        state.loading = false;
-        state.isAuthenticated = false;
-        state.user = null;
+      .addCase(loginUser.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload || 'Login failed';
       });
-  }
+    
+    // Register
+    builder
+      .addCase(registerUser.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(registerUser.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.isAuthenticated = true;
+        state.user = action.payload.user;
+        state.session = action.payload.session;
+      })
+      .addCase(registerUser.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload || 'Registration failed';
+      });
+    
+    // Logout
+    builder
+      .addCase(logoutUser.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(logoutUser.fulfilled, (state) => {
+        state.isLoading = false;
+        state.isAuthenticated = false;
+        state.user = null;
+        state.session = null;
+      })
+      .addCase(logoutUser.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload || 'Logout failed';
+      });
+    
+    // Fetch Profile
+    builder
+      .addCase(fetchUserProfile.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(fetchUserProfile.fulfilled, (state, action) => {
+        state.isLoading = false;
+        if (state.user) {
+          state.user = { ...state.user, ...action.payload };
+        }
+      })
+      .addCase(fetchUserProfile.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload || 'Failed to fetch profile';
+      });
+    
+    // Update Profile
+    builder
+      .addCase(updateUserProfile.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(updateUserProfile.fulfilled, (state, action) => {
+        state.isLoading = false;
+        if (state.user) {
+          state.user = { ...state.user, ...action.payload };
+        }
+      })
+      .addCase(updateUserProfile.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload || 'Failed to update profile';
+      });
+    
+    // Reset Password
+    builder
+      .addCase(resetPassword.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(resetPassword.fulfilled, (state) => {
+        state.isLoading = false;
+      })
+      .addCase(resetPassword.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload || 'Failed to send reset email';
+      });
+    
+    // Update Password
+    builder
+      .addCase(updatePassword.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(updatePassword.fulfilled, (state) => {
+        state.isLoading = false;
+      })
+      .addCase(updatePassword.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload || 'Failed to update password';
+      });
+  },
 });
 
-export const { clearError } = authSlice.actions;
+// Export actions and reducer
+export const { setUser, setSession, clearError } = authSlice.actions;
 export default authSlice.reducer; 

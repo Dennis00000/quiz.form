@@ -2,20 +2,39 @@
   "appName": "QuizForm",
   "common": {
     "login": "Login",
-    "register": "Register",
     "logout": "Logout",
-    "darkMode": "Dark Mode",
-    "lightMode": "Light Mode",
-    "welcome": "Welcome to QuizForm",
-    "home": "Home",
+    "register": "Register",
+    "profile": "Profile",
+    "save": "Save",
+    "cancel": "Cancel",
+    "saving": "Saving...",
     "loading": "Loading...",
+    "welcome": "Welcome to QuizForm",
+    "lightMode": "Light Mode",
+    "darkMode": "Dark Mode",
+    "home": "Home",
     "error": "An error occurred",
     "backToHome": "Back to Home",
     "close": "Close",
     "searchUsers": "Search users by name or email",
-    "save": "Save Changes",
-    "saving": "Saving...",
-    "cancel": "Cancel"
+    "delete": "Delete",
+    "edit": "Edit",
+    "create": "Create",
+    "submit": "Submit",
+    "search": "Search",
+    "filter": "Filter",
+    "reset": "Reset",
+    "yes": "Yes",
+    "no": "No",
+    "success": "Success",
+    "warning": "Warning",
+    "info": "Info",
+    "required": "Required",
+    "optional": "Optional",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "actions": "Actions"
   },
   "home": {
     "hero": {
@@ -23,7 +42,11 @@
       "subtitle": "Build beautiful forms and surveys in minutes. Share with your team or the world."
     },
     "popularTags": "Popular Tags",
-    "latestTemplates": "Latest Templates"
+    "latestTemplates": "Latest Templates",
+    "subtitle": "Create and share forms, quizzes, and surveys with ease",
+    "latestTemplates": "Latest Templates",
+    "popularTemplates": "Popular Templates",
+    "templatePlaceholder": "Sample Template"
   },
   "templates": {
     "by": "By",
@@ -182,20 +205,59 @@
         "add": "Failed to like template",
         "remove": "Failed to unlike template"
       }
-    }
+    },
+    "title": "Templates",
+    "edit": "Edit Template",
+    "view": "View Template",
+    "use": "Use Template",
+    "delete": "Delete Template",
+    "deleteConfirm": "Are you sure you want to delete this template?",
+    "name": "Template Name",
+    "description": "Description",
+    "topic": "Topic",
+    "isPublic": "Public",
+    "createdBy": "Created by",
+    "createdAt": "Created at",
+    "updatedAt": "Updated at",
+    "questions": "Questions",
+    "questionText": "Question Text",
+    "questionRequired": "Required",
+    "questionOptions": "Options",
+    "addOption": "Add Option",
+    "removeOption": "Remove Option",
+    "moveUp": "Move Up",
+    "moveDown": "Move Down",
+    "submit": "Submit",
+    "saveSuccess": "Template saved successfully",
+    "deleteSuccess": "Template deleted successfully",
+    "createSuccess": "Template created successfully",
+    "updateSuccess": "Template updated successfully",
+    "noTemplates": "No templates found",
+    "searchPlaceholder": "Search templates...",
+    "filterByTopic": "Filter by topic",
+    "sortBy": "Sort by",
+    "newest": "Newest",
+    "oldest": "Oldest",
+    "popular": "Popular",
+    "myTemplates": "My Templates",
+    "publicTemplates": "Public Templates",
+    "submissions": "Submissions",
+    "share": "Share",
+    "copy": "Copy Link",
+    "linkCopied": "Link copied to clipboard"
   },
   "auth": {
-    "name": "Full Name",
+    "name": "Name",
     "email": "Email",
     "password": "Password",
     "confirmPassword": "Confirm Password",
-    "createAccount": "Create your account",
+    "createAccount": "Create a new account",
     "loginPrompt": "Already have an account? Sign in",
     "loginButton": "Sign In",
     "registerButton": "Sign Up",
-    "registering": "Creating account...",
+    "registering": "Registering...",
     "registerError": "Failed to create account",
-    "forgotPassword": "Forgot Password?",
+    "forgotPassword": "Forgot your password?",
     "signingIn": "Signing in...",
     "signInError": "Failed to sign in",
     "unauthorized": "Please sign in to access this page",
@@ -220,25 +282,39 @@
       "resetting": "Resetting password...",
       "successReset": "Password reset successfully",
       "errorReset": "Failed to reset password"
-    }
+    },
+    "signIn": "Sign in to your account",
+    "login": "Login",
+    "register": "Register",
+    "rememberMe": "Remember me",
+    "noAccount": "Don't have an account?",
+    "alreadyHaveAccount": "Already have an account?",
+    "loginSuccess": "Logged in successfully",
+    "loginFailed": "Login failed",
+    "registrationSuccess": "Registration successful",
+    "registrationFailed": "Registration failed",
+    "passwordsDoNotMatch": "Passwords do not match",
+    "changePassword": "Change Password",
+    "emailAlreadyInUse": "Email already in use"
   },
   "profile": {
-    "title": "Profile Settings",
+    "title": "Profile",
+    "personalInfo": "Personal Information",
     "name": "Name",
     "email": "Email",
+    "bio": "Bio",
+    "avatar": "Profile Picture",
+    "changeAvatar": "Change Picture",
+    "removeAvatar": "Remove Picture",
+    "security": "Security",
+    "changePassword": "Change Password",
     "currentPassword": "Current Password",
     "newPassword": "New Password",
     "confirmPassword": "Confirm New Password",
-    "edit": "Edit Profile",
-    "success": {
-      "update": "Profile updated successfully"
-    },
-    "error": {
-      "update": "Failed to update profile",
-      "passwordMismatch": "New passwords do not match",
-      "passwordLength": "New password must be at least 8 characters",
-      "currentPassword": "Current password is incorrect"
-    }
+    "updateSuccess": "Profile updated successfully",
+    "passwordUpdateSuccess": "Password updated successfully",
+    "role": "Role",
+    "memberSince": "Member Since"
   },
   "admin": {
     "users": {
@@ -268,5 +344,46 @@
       "updateStatus": "User status updated successfully",
       "updateRole": "User role updated successfully"
     }
+  },
+  "nav": {
+    "home": "Home",
+    "templates": "Templates",
+    "about": "About",
+    "dashboard": "Dashboard",
+    "profile": "Profile",
+    "admin": "Admin",
+    "login": "Log In",
+    "register": "Register",
+    "logout": "Log Out"
+  },
+  "sidebar": {
+    "menu": "Menu",
+    "dashboard": "Dashboard",
+    "templates": "My Templates",
+    "createTemplate": "Create Template",
+    "submissions": "Submissions",
+    "profile": "Profile",
+    "admin": "Admin Panel"
+  },
+  "footer": {
+    "about": "About",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "contact": "Contact",
+    "allRightsReserved": "All rights reserved."
+  },
+  "notFound": {
+    "title": "Page Not Found",
+    "message": "The page you are looking for might have been removed, had its name changed, or is temporarily unavailable.",
+    "goHome": "Go to Homepage",
+    "contactSupport": "Contact Support"
+  },
+  "errors": {
+    "general": "Something went wrong. Please try again.",
+    "network": "Network error. Please check your connection.",
+    "unauthorized": "You are not authorized to perform this action.",
+    "notFound": "The requested resource was not found.",
+    "validation": "Please check your input and try again.",
+    "server": "Server error. Please try again later."
   }
 } 
